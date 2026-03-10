@@ -6,20 +6,25 @@ import 'react-native-url-polyfill/auto';
 const supabaseUrl = 'https://roqokwyldxxyimcuhtvi.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvcW9rd3lsZHh4eWltY3VodHZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MjA3NzksImV4cCI6MjA4ODI5Njc3OX0.NtEWyiq29BfgzeyizElEFTi3yPskLETP9rD9gPfI7Ws';
 
+// Check if we're in a browser environment
+const isBrowser = typeof window !== 'undefined';
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: AsyncStorage,
-    autoRefreshToken: true,
-    persistSession: true,
+    storage: isBrowser ? AsyncStorage : undefined,
+    autoRefreshToken: isBrowser,
+    persistSession: isBrowser,
     detectSessionInUrl: false,
   },
 });
 
-// Handle app state changes for token refresh
-AppState.addEventListener('change', (state) => {
-  if (state === 'active') {
-    supabase.auth.startAutoRefresh();
-  } else {
-    supabase.auth.stopAutoRefresh();
-  }
-});
+// Handle app state changes for token refresh (only in native environment)
+if (typeof AppState !== 'undefined') {
+  AppState.addEventListener('change', (state) => {
+    if (state === 'active') {
+      supabase.auth.startAutoRefresh();
+    } else {
+      supabase.auth.stopAutoRefresh();
+    }
+  });
+}
